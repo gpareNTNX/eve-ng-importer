@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Runtime/local state
+*.log
+.env
+.DS_Store
+
+# Build/package artifacts
+*.zip
+*.tar.gz
+dist/
+build/
