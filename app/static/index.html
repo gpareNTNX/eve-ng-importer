@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EVE Image Forge</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header>
+    <div><span class="logo">EIF</span><div><h1>EVE Image Forge</h1><p>Préparer et installer des images dans EVE-NG</p></div></div>
+    <span id="health" class="pill neutral">Non connecté</span>
+  </header>
+
+  <main>
+    <section class="card auth">
+      <h2>1. Connexion</h2>
+      <div class="row">
+        <input id="token" type="password" placeholder="Jeton affiché par install.sh" autocomplete="off">
+        <button id="connect">Connecter</button>
+      </div>
+      <div id="system" class="small muted"></div>
+    </section>
+
+    <section class="card">
+      <h2>2. Image source</h2>
+      <div id="drop" class="drop">
+        <input id="file" type="file" hidden>
+        <strong>Dépose ton fichier ici</strong>
+        <span>qcow2, iso, bin, tgz, zip, tar.gz, vmdk, vdi, img, raw, image, ova, gz</span>
+        <button id="pick" class="secondary">Choisir un fichier</button>
+      </div>
+      <div class="progress"><div id="uploadBar"></div></div>
+      <div id="uploadText" class="small muted"></div>
+    </section>
+
+    <section class="card" id="analysisCard" hidden>
+      <h2>3. Analyse</h2>
+      <div id="warnings"></div>
+      <label>Image détectée
+        <select id="candidate"></select>
+      </label>
+      <div id="candidateInfo" class="small muted"></div>
+    </section>
+
+    <section class="card" id="installCard" hidden>
+      <h2>4. Installation EVE-NG</h2>
+      <div id="qemuFields">
+        <div class="grid">
+          <label>Template EVE-NG<select id="template"></select></label>
+          <label>Version / nom<input id="version" placeholder="ex. 17.12.1"></label>
+          <label>Nom du disque<select id="diskName">
+            <option>hda.qcow2</option><option>virtioa.qcow2</option><option>sataa.qcow2</option>
+            <option>scsia.qcow2</option><option>virtidea.qcow2</option><option>lsia.qcow2</option>
+          </select></label>
+          <label id="isoSizeWrap" hidden>Taille disque ISO (Go)<input id="isoSize" type="number" min="1" max="4096" value="20"></label>
+        </div>
+      </div>
+      <div id="simpleFields" hidden>
+        <label>Nom cible (optionnel)<input id="targetName" placeholder="Conserver le nom d'origine"></label>
+      </div>
+      <div class="checks">
+        <label><input id="backup" type="checkbox" checked> Sauvegarder la version existante</label>
+        <label><input id="dry" type="checkbox" checked> Dry-run d'abord (recommandé)</label>
+      </div>
+      <button id="install">Lancer</button>
+    </section>
+
+    <section class="card" id="jobCard" hidden>
+      <div class="titleRow"><h2>5. Exécution</h2><span id="jobStatus" class="pill neutral">En attente</span></div>
+      <div class="progress"><div id="jobBar"></div></div>
+      <pre id="logs"></pre>
+      <div id="result"></div>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
