@@ -59,7 +59,7 @@ def job_worker(job_id: str, spec: dict):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "EVEImageForge/0.1"
+    server_version = "EVEImageForge/0.2"
 
     def log_message(self, fmt, *args):
         print("%s - %s" % (self.address_string(), fmt % args))
@@ -120,6 +120,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, CORE.system_status())
             if p == "/api/templates":
                 return self._json(200, {"templates": CORE.discover_templates()})
+            if p == "/api/installed":
+                return self._json(200, {"images": CORE.installed_images()})
             if p.startswith("/api/jobs/"):
                 jid = p.rsplit("/", 1)[-1]
                 with JOBS_LOCK:
@@ -190,7 +192,7 @@ def main():
     ap.add_argument("--host", default="0.0.0.0")
     ap.add_argument("--port", type=int, default=8088)
     args = ap.parse_args()
-    print(f"EVE Image Forge v0.1.0 - http://{args.host}:{args.port}")
+    print(f"EVE Image Forge v0.2.0 Smart Import - http://{args.host}:{args.port}")
     print(f"EVE root: {EVE_ROOT}")
     ThreadingHTTPServer((args.host, args.port), Handler).serve_forever()
 

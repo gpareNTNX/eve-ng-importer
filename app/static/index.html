@@ -3,18 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>EVE Image Forge</title>
+  <title>EVE Image Forge — Smart Import</title>
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
   <header>
-    <div><span class="logo">EIF</span><div><h1>EVE Image Forge</h1><p>Préparer et installer des images dans EVE-NG</p></div></div>
+    <div>
+      <span class="logo">EIF</span>
+      <div>
+        <h1>EVE Image Forge <span class="versionTag">v0.2</span></h1>
+        <p>Smart Import pour EVE-NG</p>
+      </div>
+    </div>
     <span id="health" class="pill neutral">Non connecté</span>
   </header>
 
   <main>
     <section class="card auth">
-      <h2>1. Connexion</h2>
+      <div class="titleRow"><h2>1. Connexion</h2><span class="feature">SMART IMPORT</span></div>
       <div class="row">
         <input id="token" type="password" placeholder="Jeton affiché par install.sh" autocomplete="off">
         <button id="connect">Connecter</button>
@@ -35,35 +41,70 @@
     </section>
 
     <section class="card" id="analysisCard" hidden>
-      <h2>3. Analyse</h2>
+      <div class="titleRow"><h2>3. Analyse</h2><span id="analysisBadge" class="pill neutral">Analyse</span></div>
       <div id="warnings"></div>
-      <label>Image détectée
-        <select id="candidate"></select>
-      </label>
-      <div id="candidateInfo" class="small muted"></div>
+
+      <div id="smartPanel" class="smartPanel" hidden>
+        <div class="smartTop">
+          <div>
+            <div class="eyebrow">SMART IMPORT RECOMMANDÉ</div>
+            <h3 id="smartProduct">—</h3>
+            <div id="smartVendor" class="small muted noTop"></div>
+          </div>
+          <span id="smartConfidence" class="confidence">—</span>
+        </div>
+        <div class="smartGrid">
+          <div><span>Template EVE</span><strong id="smartTemplate">—</strong></div>
+          <div><span>Version</span><strong id="smartVersion">—</strong></div>
+          <div><span>Dossier cible</span><strong id="smartFolder">—</strong></div>
+          <div><span>État</span><strong id="smartTargetState">—</strong></div>
+        </div>
+        <div class="mappingTitle">Plan des disques</div>
+        <div id="smartDisks" class="diskMap"></div>
+        <div id="smartExisting" class="small muted"></div>
+        <div id="smartWarnings"></div>
+        <details class="why"><summary>Pourquoi ce choix?</summary><div id="smartReasons"></div></details>
+      </div>
+
+      <div class="manualCandidate">
+        <label>Fichiers reconnus dans la source
+          <select id="candidate"></select>
+        </label>
+        <div id="candidateInfo" class="small muted"></div>
+      </div>
     </section>
 
     <section class="card" id="installCard" hidden>
       <h2>4. Installation EVE-NG</h2>
-      <div id="qemuFields">
-        <div class="grid">
-          <label>Template EVE-NG<select id="template"></select></label>
-          <label>Version / nom<input id="version" placeholder="ex. 17.12.1"></label>
-          <label>Nom du disque<select id="diskName">
-            <option>hda.qcow2</option><option>virtioa.qcow2</option><option>sataa.qcow2</option>
-            <option>scsia.qcow2</option><option>virtidea.qcow2</option><option>lsia.qcow2</option>
-          </select></label>
-          <label id="isoSizeWrap" hidden>Taille disque ISO (Go)<input id="isoSize" type="number" min="1" max="4096" value="20"></label>
+
+      <div id="smartModeWrap" class="modeChoice" hidden>
+        <label class="smartSwitch"><input id="smartMode" type="checkbox" checked><span>Utiliser le plan Smart Import complet</span></label>
+        <div class="small muted noTop">Tous les disques détectés seront installés ensemble avec les noms attendus par EVE-NG.</div>
+      </div>
+
+      <div id="manualPanel">
+        <div id="qemuFields">
+          <div class="grid">
+            <label>Template EVE-NG<select id="template"></select></label>
+            <label>Version / nom<input id="version" placeholder="ex. 17.12.1"></label>
+            <label>Nom du disque<select id="diskName">
+              <option>hda.qcow2</option><option>virtioa.qcow2</option><option>sataa.qcow2</option>
+              <option>scsia.qcow2</option><option>virtidea.qcow2</option><option>lsia.qcow2</option>
+              <option>megasasa.qcow2</option>
+            </select></label>
+            <label id="isoSizeWrap" hidden>Taille disque ISO (Go)<input id="isoSize" type="number" min="1" max="4096" value="20"></label>
+          </div>
+        </div>
+        <div id="simpleFields" hidden>
+          <label>Nom cible (optionnel)<input id="targetName" placeholder="Conserver le nom d'origine"></label>
         </div>
       </div>
-      <div id="simpleFields" hidden>
-        <label>Nom cible (optionnel)<input id="targetName" placeholder="Conserver le nom d'origine"></label>
-      </div>
+
       <div class="checks">
         <label><input id="backup" type="checkbox" checked> Sauvegarder la version existante</label>
         <label><input id="dry" type="checkbox" checked> Dry-run d'abord (recommandé)</label>
       </div>
-      <button id="install">Lancer</button>
+      <button id="install">Lancer le Smart Import</button>
     </section>
 
     <section class="card" id="jobCard" hidden>

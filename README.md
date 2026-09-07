@@ -1,6 +1,30 @@
-# EVE Image Forge 0.1.0
+# EVE Image Forge 0.2.0 — Smart Import
 
-Application web locale pour préparer des images EVE-NG sans manipuler manuellement les dossiers, conversions et permissions.
+Application web locale pour préparer et installer des images dans EVE-NG avec détection automatique du produit, du template, de la version et du layout disque.
+
+## Nouveauté 0.2: Smart Import
+
+Après l'upload, Smart Import analyse le nom du fichier, les chemins internes d'une archive, les templates réellement présents sur le serveur EVE-NG et les images déjà installées. Il construit ensuite un plan d'installation complet avant toute écriture.
+
+Le plan peut automatiquement proposer:
+
+- le constructeur et le produit;
+- le préfixe/template EVE-NG;
+- la version extraite du nom de l'image;
+- le dossier cible `/opt/unetlab/addons/qemu/<template>-<version>/`;
+- le mapping d'un ou plusieurs disques vers `hda.qcow2`, `virtioa.qcow2`, `sataa.qcow2`, etc.;
+- la conversion VMDK/VDI/RAW/QCOW vers QCOW2;
+- les disques additionnels à générer lorsqu'un profil le requiert;
+- la présence d'une version identique ou d'autres versions déjà installées;
+- un score de confiance et les raisons de la détection.
+
+Le mode manuel de la version 0.1 reste disponible en tout temps.
+
+## Produits reconnus
+
+Les profils intégrés couvrent notamment Cisco ASAv, Catalyst 8000V/9000V, CSR1000v, IOSv/IOSvL2, NX-OSv 9000, XRv/XRv9K, Firepower FTD/FMC, Cisco SD-WAN/Viptela, Fortinet FortiGate, Palo Alto VM-Series, Check Point, Juniper vSRX/vJunos/vMX/vQFX, F5 BIG-IP, Aruba ClearPass/AOS-CX/VMC, Arista vEOS, VyOS, MikroTik CHR, pfSense, OPNsense, VMware ESXi/vCenter/NSX, Windows, Linux et Nutanix CE/AHV générique.
+
+Smart Import ne dépend pas uniquement de cette liste: il compare aussi la source avec les templates QEMU présents dans `html/templates/intel` ou `html/templates/amd`.
 
 ## Formats
 
@@ -8,47 +32,98 @@ Application web locale pour préparer des images EVE-NG sans manipuler manuellem
 - Installation ISO: `.iso` + création d'un disque QCOW2 vierge
 - Cisco IOL: `.bin`
 - Dynamips: `.image`
-- Archives: `.zip`, `.tgz`, `.tar.gz`, `.tar`, `.ova`, `.gz` (l'application cherche les images supportées à l'intérieur)
+- Archives: `.zip`, `.tgz`, `.tar.gz`, `.tar`, `.ova`, `.gz`
 
-## Installation
+## Installation / mise à jour
 
-Copier le dossier `eve-image-forge` sur le serveur EVE-NG puis:
+Sur le serveur EVE-NG:
 
 ```bash
-cd eve-image-forge
+git clone https://github.com/gpareNTNX/eve-ng-importer.git
+cd eve-ng-importer
 sudo ./install.sh
 ```
 
-Le script affiche l'URL (port `8088`) et un jeton d'accès. Ouvrir l'URL depuis un navigateur, entrer le jeton, puis glisser-déposer une image.
+Pour une installation existante:
 
-## Ce que fait l'application
+```bash
+cd eve-ng-importer
+git pull
+sudo ./install.sh
+```
 
-1. Upload par morceaux de 8 MiB, adapté aux gros fichiers.
-2. Extraction sécurisée des archives (blocage des chemins `../`, liens symboliques et devices).
-3. Détection de QEMU / ISO / IOL / Dynamips.
-4. Découverte des templates QEMU installés dans `html/templates/intel` ou `amd`.
-5. Apprentissage du nom de disque à partir des images déjà présentes pour le même préfixe, avec profils de secours.
-6. Dry-run avant toute écriture.
-7. Conversion VMDK/VDI/RAW/QCOW vers QCOW2 avec `qemu-img`.
-8. Installation dans les chemins EVE-NG appropriés.
-9. Sauvegarde d'un dossier/fichier cible existant avant remplacement.
-10. Exécution de `/opt/unetlab/wrappers/unl_wrapper -a fixpermissions`.
+Le script affiche l'URL du service sur le port `8088` et le jeton d'accès. Le jeton existant est conservé lors d'une mise à jour.
 
-## Chemins utilisés
+## Workflow Smart Import
 
-- QEMU: `/opt/unetlab/addons/qemu/<template>-<version>/`
-- IOL: `/opt/unetlab/addons/iol/bin/`
-- Dynamips: `/opt/unetlab/addons/dynamips/`
-- État/uploads: `/var/lib/eve-image-forge/`
-- Jeton: `/etc/eve-image-forge/token`
+1. Upload par morceaux de 8 MiB.
+2. Extraction sécurisée des archives.
+3. Inventaire de tous les fichiers QEMU/ISO/IOL/Dynamips.
+4. Détection constructeur/produit/version.
+5. Comparaison avec les templates installés sur le serveur.
+6. Apprentissage du layout disque à partir des images déjà présentes.
+7. Construction d'un plan multi-disques.
+8. Détection d'une cible déjà installée.
+9. Dry-run par défaut.
+10. Préparation dans un dossier de staging.
+11. Conversion/copie/création des disques.
+12. Sauvegarde de l'ancienne cible si nécessaire.
+13. Activation atomique du nouveau dossier.
+14. Exécution de `/opt/unetlab/wrappers/unl_wrapper -a fixpermissions`.
+
+## Multi-disques
+
+Si l'archive contient plusieurs disques, Smart Import les installe ensemble. Les noms EVE déjà présents dans l'archive sont préservés lorsqu'ils sont valides. Sinon, le layout du template ou le profil intégré est utilisé.
+
+Exemple ClearPass:
+
+```text
+ClearPass-disk1.qcow2 -> hda.qcow2
+ClearPass-disk2.qcow2 -> hdb.qcow2
+```
+
+Exemple vManage classique:
+
+```text
+viptela-vmanage-19.2.3.qcow2 -> virtioa.qcow2
+[créé automatiquement, 100 Go] -> virtiob.qcow2
+```
+
+## Sécurité
+
+- Dry-run activé par défaut.
+- Blocage des chemins `../` dans ZIP/TAR.
+- Liens symboliques, hard links et devices ignorés dans les archives.
+- Validation stricte des noms de disques EVE.
+- Maximum de 26 disques dans un plan.
+- Taille des disques générés limitée à 1–4096 Go.
+- Préparation QEMU dans un répertoire de staging avant remplacement de la cible.
+- Sauvegarde de la cible existante dans `/var/lib/eve-image-forge/backups/`.
+- Authentification Web par jeton local.
 
 ## Limites importantes
 
-Une image ne devient pas automatiquement bootable uniquement parce qu'elle est convertie en QCOW2. Le template EVE-NG doit correspondre au produit (CPU, RAM, NIC, console et options QEMU). L'application réutilise les templates déjà installés dans EVE et permet de choisir explicitement le template et le bus disque.
+Smart Import utilise des heuristiques. Un score de confiance faible doit être vérifié avant de désactiver le dry-run. Le fait qu'une image soit au format QCOW2 ne garantit pas qu'elle soit bootable avec n'importe quel template: CPU, RAM, NIC, console et options QEMU restent définis par le template EVE-NG.
 
-Pour une ISO, l'application crée `cdrom.iso` et un disque QCOW2 vierge. Il faut ensuite démarrer le noeud, faire l'installation du système sur le disque et, selon le produit/template, retirer l'ISO après installation.
+Le profil Nutanix est volontairement générique: Smart Import peut reconnaître le fichier et proposer un préfixe, mais il avertit si aucun template Nutanix correspondant n'est installé dans EVE-NG.
 
-Pour IOL, l'application place et rend le `.bin` exécutable, mais ne fournit aucune image ni licence.
+Pour IOL, l'application place et rend le `.bin` exécutable mais ne fournit aucune image ni licence.
+
+## API locale
+
+- `GET /api/status`
+- `GET /api/templates`
+- `GET /api/installed`
+- `POST /api/analyze`
+- `POST /api/install`
+
+Toutes les API, sauf les fichiers statiques de l'interface, exigent `X-EIF-Token`.
+
+## Tests
+
+```bash
+python3 -m unittest discover -s tests -v
+```
 
 ## Service
 

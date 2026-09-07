@@ -3,6 +3,7 @@ set -euo pipefail
 if [[ ${EUID:-$(id -u)} -ne 0 ]]; then echo "ERREUR: lance ce script en root." >&2; exit 1; fi
 if [[ ! -d /opt/unetlab ]]; then echo "ERREUR: /opt/unetlab introuvable. Ce script doit être lancé sur le serveur EVE-NG." >&2; exit 1; fi
 SRC_DIR="$(cd "$(dirname "$0")" && pwd)"
+VERSION="$(cat "$SRC_DIR/VERSION" 2>/dev/null || echo unknown)"
 APP_DIR=/opt/eve-image-forge
 STATE_DIR=/var/lib/eve-image-forge
 CONF_DIR=/etc/eve-image-forge
@@ -37,11 +38,12 @@ ProtectHome=true
 WantedBy=multi-user.target
 EOF
 systemctl daemon-reload
-systemctl enable --now eve-image-forge
+systemctl enable eve-image-forge >/dev/null
+systemctl restart eve-image-forge
 IP=$(hostname -I 2>/dev/null | awk '{print $1}')
 echo
 echo "============================================================"
-echo " EVE Image Forge installé"
+echo " EVE Image Forge ${VERSION} installé"
 echo " URL   : http://${IP:-ADRESSE_EVE}:8088"
 echo " Jeton : $(cat "$CONF_DIR/token")"
 echo "============================================================"
