@@ -2,6 +2,16 @@
 
 Application web locale pour préparer et installer des images dans EVE-NG avec détection automatique du produit, du template, de la version et du layout disque.
 
+## Project origin / Origine du projet
+
+**English**  
+Original project vision, idea, and concept by **Guillaume Paré**.  
+Conceived and initiated by **Guillaume Paré**, with the assistance of artificial intelligence.
+
+**Français**  
+Vision, idée et concept originaux du projet par **Guillaume Paré**.  
+Conçu et initié par **Guillaume Paré**, avec l'aide de l'intelligence artificielle.
+
 ## Interface bilingue FR / EN
 
 L'interface est disponible en français et en anglais. Au premier chargement, EVE Image Forge utilise le français pour un navigateur francophone et l'anglais pour les autres langues. Les boutons `FR` et `EN` dans l'en-tête permettent de changer instantanément de langue et le choix est mémorisé localement dans le navigateur.
