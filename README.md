@@ -156,3 +156,155 @@ sudo ./uninstall.sh
 ```
 
 Les backups et uploads ne sont pas supprimés automatiquement afin d'éviter une perte de données.
+
+---------
+
+# English
+# EVE Image Forge 0.2.1 — Smart Import
+
+Local web application designed to prepare and install images into EVE-NG with automatic detection of product, template, version, and disk layout.
+## Project Origin
+
+Original project vision, idea, and concept by Guillaume Paré.
+
+Conceived and initiated by Guillaume Paré, with the assistance of artificial intelligence.
+## Bilingual Interface (FR / EN)
+
+The interface is available in French and English. On initial load, EVE Image Forge uses French for French-language browsers and English for all others. The FR and EN buttons in the header allow instant language toggling, and the choice is saved locally in the browser.
+
+Translation also covers dynamic elements: upload progress, Smart Plan, target state, disk mapping, warnings, detection reasons, results, errors, and key installation log messages.
+## What's New in 0.2: Smart Import
+
+After upload, Smart Import analyzes the filename, internal archive paths, templates actually present on the EVE-NG server, and currently installed images. It then builds a full installation plan before writing anything to disk.
+
+The plan can automatically propose:
+
+- Vendor and product;
+- EVE-NG prefix/template;
+- Version extracted from the image name;
+- Target folder /opt/unetlab/addons/qemu/<template>-<version>/;
+- Mapping of one or multiple disks to hda.qcow2, virtioa.qcow2, sataa.qcow2, etc.;
+- VMDK/VDI/RAW/QCOW conversion to QCOW2;
+- Additional disks to generate when required by a profile;
+- Presence of an identical version or other previously installed versions;
+- Confidence score and detection reasons.
+
+The manual mode from version 0.1 remains available at all times.
+## Recognized Products
+
+Built-in profiles cover Cisco ASAv, Catalyst 8000V/9000V, CSR1000v, IOSv/IOSvL2, NX-OSv 9000, XRv/XRv9K, Firepower FTD/FMC, Cisco SD-WAN/Viptela, Fortinet FortiGate, Palo Alto VM-Series, Check Point, Juniper vSRX/vJunos/vMX/vQFX, F5 BIG-IP, Aruba ClearPass/AOS-CX/VMC, Arista vEOS, VyOS, MikroTik CHR, pfSense, OPNsense, VMware ESXi/vCenter/NSX, Windows, Linux, and generic Nutanix CE/AHV.
+
+Smart Import does not rely solely on this list: it also compares the source file against QEMU templates present in html/templates/intel or html/templates/amd.
+## Supported Formats
+
+- Direct QEMU: .qcow2, .qcow, .vmdk, .vdi, .raw, .img
+- ISO Installation: .iso + creation of a blank QCOW2 disk
+- Cisco IOL: .bin
+- Dynamips: .image
+- Archives: .zip, .tgz, .tar.gz, .tar, .ova, .gz
+
+## Installation / Update
+
+On the EVE-NG server:
+
+```bash
+git clone https://github.com/gpareNTNX/eve-ng-importer.git
+cd eve-ng-importer
+sudo ./install.sh
+```
+
+For an existing installation:
+
+```bash
+cd eve-ng-importer
+git pull
+sudo ./install.sh
+```
+
+The script displays the service URL on port 8088 and the access token. The existing token is preserved during updates.
+## Smart Import Workflow
+
+1. Chunked upload in 8 MiB parts.
+2. Secure archive extraction.
+3. Inventory of all QEMU/ISO/IOL/Dynamips files.
+4. Vendor/product/version detection.
+5. Comparison against templates installed on the server.
+6. Disk layout learning from already installed images.
+7. Multi-disk plan construction.
+8. Detection of an already installed target.
+9. Dry-run enabled by default.
+10. Preparation in a staging folder.
+11. Disk conversion/copy/creation.
+12. Backup of the former target if necessary.
+13. Atomic activation of the new directory.
+14. Execution of /opt/unetlab/wrappers/unl_wrapper -a fixpermissions.
+
+## Multi-Disk Management
+
+If the archive contains multiple disks, Smart Import installs them together. Existing EVE names inside the archive are preserved if valid. Otherwise, the layout from the template or built-in profile is applied.
+
+ClearPass Example:
+
+```text
+ClearPass-disk1.qcow2 -> hda.qcow2
+ClearPass-disk2.qcow2 -> hdb.qcow2
+```
+
+Classic vManage Example:
+
+```text
+viptela-vmanage-19.2.3.qcow2 -> virtioa.qcow2
+[créé automatiquement, 100 Go] -> virtiob.qcow2
+```
+## Security
+
+- Dry-run enabled by default.
+- Blocking of ../ path traversal in ZIP/TAR files.
+- Symlinks, hard links, and device nodes ignored in archives.
+- Strict validation of EVE disk names.
+- Maximum of 26 disks per plan.
+- Size limit of 1–4096 GB for generated disks.
+- QEMU staging directory used prior to target replacement.
+- Existing target backed up to /var/lib/eve-image-forge/backups/.
+- Web authentication via local token.
+
+## Important Limitations
+
+Smart Import relies on heuristics. A low confidence score should be reviewed before disabling dry-run. The fact that an image is in QCOW2 format does not guarantee it will boot with any template: CPU, RAM, NIC, console, and QEMU options remain defined by the EVE-NG template.
+
+The Nutanix profile is intentionally generic: Smart Import can recognize the file and suggest a prefix, but it will issue a warning if no matching Nutanix template is installed in EVE-NG.
+
+For IOL, the application places and makes the .bin executable, but does not provide images or license files.
+
+## Local API
+
+- `GET /api/status`
+- `GET /api/templates`
+- `GET /api/installed`
+- `POST /api/analyze`
+- `POST /api/install`
+
+All APIs, except for static interface assets, require X-EIF-Token.
+
+## Testing
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+## Service Management
+
+```bash
+systemctl status eve-image-forge
+journalctl -u eve-image-forge -f
+systemctl restart eve-image-forge
+```
+
+## Uninstallation
+
+```bash
+sudo ./uninstall.sh
+```
+
+Backups and uploads are not automatically deleted to prevent data loss.
+
