@@ -20,6 +20,8 @@ EVE_ROOT = os.environ.get("EIF_EVE_ROOT", "/opt/unetlab")
 STATE_ROOT = os.environ.get("EIF_STATE_ROOT", "/var/lib/eve-image-forge")
 TOKEN_FILE = Path(os.environ.get("EIF_TOKEN_FILE", "/etc/eve-image-forge/token"))
 CORE = ForgeCore(EVE_ROOT, STATE_ROOT)
+VERSION_FILE = HERE.parent / "VERSION"
+APP_VERSION = VERSION_FILE.read_text().strip() if VERSION_FILE.exists() else CORE.VERSION
 JOBS: dict[str, dict] = {}
 JOBS_LOCK = threading.Lock()
 
@@ -59,7 +61,7 @@ def job_worker(job_id: str, spec: dict):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "EVEImageForge/0.2"
+    server_version = f"EVEImageForge/{APP_VERSION}"
 
     def log_message(self, fmt, *args):
         print("%s - %s" % (self.address_string(), fmt % args))
@@ -117,7 +119,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             if p == "/api/status":
-                return self._json(200, CORE.system_status())
+                status = CORE.system_status()
+                status["version"] = APP_VERSION
+                return self._json(200, status)
             if p == "/api/templates":
                 return self._json(200, {"templates": CORE.discover_templates()})
             if p == "/api/installed":
@@ -192,7 +196,7 @@ def main():
     ap.add_argument("--host", default="0.0.0.0")
     ap.add_argument("--port", type=int, default=8088)
     args = ap.parse_args()
-    print(f"EVE Image Forge v0.2.0 Smart Import - http://{args.host}:{args.port}")
+    print(f"EVE Image Forge v{APP_VERSION} Smart Import - http://{args.host}:{args.port}")
     print(f"EVE root: {EVE_ROOT}")
     ThreadingHTTPServer((args.host, args.port), Handler).serve_forever()
 
