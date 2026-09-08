@@ -11,63 +11,69 @@
     <div>
       <span class="logo">EIF</span>
       <div>
-        <h1>EVE Image Forge <span class="versionTag">v0.2</span></h1>
-        <p>Smart Import pour EVE-NG</p>
+        <h1>EVE Image Forge <span class="versionTag">v0.2.1</span></h1>
+        <p data-i18n="header.subtitle">Smart Import pour EVE-NG</p>
       </div>
     </div>
-    <span id="health" class="pill neutral">Non connecté</span>
+    <div class="headerActions">
+      <div class="languageSwitch" role="group" aria-label="Langue / Language">
+        <button type="button" class="langButton" data-lang="fr">FR</button>
+        <button type="button" class="langButton" data-lang="en">EN</button>
+      </div>
+      <span id="health" class="pill neutral" data-i18n="health.disconnected">Non connecté</span>
+    </div>
   </header>
 
   <main>
     <section class="card auth">
-      <div class="titleRow"><h2>1. Connexion</h2><span class="feature">SMART IMPORT</span></div>
+      <div class="titleRow"><h2 data-i18n="auth.title">1. Connexion</h2><span class="feature">SMART IMPORT</span></div>
       <div class="row">
-        <input id="token" type="password" placeholder="Jeton affiché par install.sh" autocomplete="off">
-        <button id="connect">Connecter</button>
+        <input id="token" type="password" data-i18n-placeholder="auth.tokenPlaceholder" placeholder="Jeton affiché par install.sh" autocomplete="off">
+        <button id="connect" data-i18n="auth.connect">Connecter</button>
       </div>
       <div id="system" class="small muted"></div>
     </section>
 
     <section class="card">
-      <h2>2. Image source</h2>
+      <h2 data-i18n="source.title">2. Image source</h2>
       <div id="drop" class="drop">
         <input id="file" type="file" hidden>
-        <strong>Dépose ton fichier ici</strong>
+        <strong data-i18n="source.drop">Dépose ton fichier ici</strong>
         <span>qcow2, iso, bin, tgz, zip, tar.gz, vmdk, vdi, img, raw, image, ova, gz</span>
-        <button id="pick" class="secondary">Choisir un fichier</button>
+        <button id="pick" class="secondary" data-i18n="source.pick">Choisir un fichier</button>
       </div>
       <div class="progress"><div id="uploadBar"></div></div>
       <div id="uploadText" class="small muted"></div>
     </section>
 
     <section class="card" id="analysisCard" hidden>
-      <div class="titleRow"><h2>3. Analyse</h2><span id="analysisBadge" class="pill neutral">Analyse</span></div>
+      <div class="titleRow"><h2 data-i18n="analysis.title">3. Analyse</h2><span id="analysisBadge" class="pill neutral" data-i18n="analysis.badge">Analyse</span></div>
       <div id="warnings"></div>
 
       <div id="smartPanel" class="smartPanel" hidden>
         <div class="smartTop">
           <div>
-            <div class="eyebrow">SMART IMPORT RECOMMANDÉ</div>
+            <div class="eyebrow" data-i18n="smart.recommended">SMART IMPORT RECOMMANDÉ</div>
             <h3 id="smartProduct">—</h3>
             <div id="smartVendor" class="small muted noTop"></div>
           </div>
           <span id="smartConfidence" class="confidence">—</span>
         </div>
         <div class="smartGrid">
-          <div><span>Template EVE</span><strong id="smartTemplate">—</strong></div>
-          <div><span>Version</span><strong id="smartVersion">—</strong></div>
-          <div><span>Dossier cible</span><strong id="smartFolder">—</strong></div>
-          <div><span>État</span><strong id="smartTargetState">—</strong></div>
+          <div><span data-i18n="smart.template">Template EVE</span><strong id="smartTemplate">—</strong></div>
+          <div><span data-i18n="smart.version">Version</span><strong id="smartVersion">—</strong></div>
+          <div><span data-i18n="smart.folder">Dossier cible</span><strong id="smartFolder">—</strong></div>
+          <div><span data-i18n="smart.state">État</span><strong id="smartTargetState">—</strong></div>
         </div>
-        <div class="mappingTitle">Plan des disques</div>
+        <div class="mappingTitle" data-i18n="smart.diskPlan">Plan des disques</div>
         <div id="smartDisks" class="diskMap"></div>
         <div id="smartExisting" class="small muted"></div>
         <div id="smartWarnings"></div>
-        <details class="why"><summary>Pourquoi ce choix?</summary><div id="smartReasons"></div></details>
+        <details class="why"><summary data-i18n="smart.why">Pourquoi ce choix?</summary><div id="smartReasons"></div></details>
       </div>
 
       <div class="manualCandidate">
-        <label>Fichiers reconnus dans la source
+        <label><span data-i18n="analysis.recognizedFiles">Fichiers reconnus dans la source</span>
           <select id="candidate"></select>
         </label>
         <div id="candidateInfo" class="small muted"></div>
@@ -75,40 +81,40 @@
     </section>
 
     <section class="card" id="installCard" hidden>
-      <h2>4. Installation EVE-NG</h2>
+      <h2 data-i18n="install.title">4. Installation EVE-NG</h2>
 
       <div id="smartModeWrap" class="modeChoice" hidden>
-        <label class="smartSwitch"><input id="smartMode" type="checkbox" checked><span>Utiliser le plan Smart Import complet</span></label>
-        <div class="small muted noTop">Tous les disques détectés seront installés ensemble avec les noms attendus par EVE-NG.</div>
+        <label class="smartSwitch"><input id="smartMode" type="checkbox" checked><span data-i18n="install.useSmart">Utiliser le plan Smart Import complet</span></label>
+        <div class="small muted noTop" data-i18n="install.smartHelp">Tous les disques détectés seront installés ensemble avec les noms attendus par EVE-NG.</div>
       </div>
 
       <div id="manualPanel">
         <div id="qemuFields">
           <div class="grid">
-            <label>Template EVE-NG<select id="template"></select></label>
-            <label>Version / nom<input id="version" placeholder="ex. 17.12.1"></label>
-            <label>Nom du disque<select id="diskName">
+            <label><span data-i18n="install.template">Template EVE-NG</span><select id="template"></select></label>
+            <label><span data-i18n="install.versionName">Version / nom</span><input id="version" data-i18n-placeholder="install.versionPlaceholder" placeholder="ex. 17.12.1"></label>
+            <label><span data-i18n="install.diskName">Nom du disque</span><select id="diskName">
               <option>hda.qcow2</option><option>virtioa.qcow2</option><option>sataa.qcow2</option>
               <option>scsia.qcow2</option><option>virtidea.qcow2</option><option>lsia.qcow2</option>
               <option>megasasa.qcow2</option>
             </select></label>
-            <label id="isoSizeWrap" hidden>Taille disque ISO (Go)<input id="isoSize" type="number" min="1" max="4096" value="20"></label>
+            <label id="isoSizeWrap" hidden><span data-i18n="install.isoSize">Taille disque ISO (Go)</span><input id="isoSize" type="number" min="1" max="4096" value="20"></label>
           </div>
         </div>
         <div id="simpleFields" hidden>
-          <label>Nom cible (optionnel)<input id="targetName" placeholder="Conserver le nom d'origine"></label>
+          <label><span data-i18n="install.targetName">Nom cible (optionnel)</span><input id="targetName" data-i18n-placeholder="install.targetPlaceholder" placeholder="Conserver le nom d'origine"></label>
         </div>
       </div>
 
       <div class="checks">
-        <label><input id="backup" type="checkbox" checked> Sauvegarder la version existante</label>
-        <label><input id="dry" type="checkbox" checked> Dry-run d'abord (recommandé)</label>
+        <label><input id="backup" type="checkbox" checked> <span data-i18n="install.backup">Sauvegarder la version existante</span></label>
+        <label><input id="dry" type="checkbox" checked> <span data-i18n="install.dryRun">Dry-run d'abord (recommandé)</span></label>
       </div>
-      <button id="install">Lancer le Smart Import</button>
+      <button id="install" data-i18n="install.launchSmart">Lancer le Smart Import</button>
     </section>
 
     <section class="card" id="jobCard" hidden>
-      <div class="titleRow"><h2>5. Exécution</h2><span id="jobStatus" class="pill neutral">En attente</span></div>
+      <div class="titleRow"><h2 data-i18n="job.title">5. Exécution</h2><span id="jobStatus" class="pill neutral" data-i18n="job.waiting">En attente</span></div>
       <div class="progress"><div id="jobBar"></div></div>
       <pre id="logs"></pre>
       <div id="result"></div>
