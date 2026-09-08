@@ -1,6 +1,12 @@
-# EVE Image Forge 0.2.0 — Smart Import
+# EVE Image Forge 0.2.1 — Smart Import
 
 Application web locale pour préparer et installer des images dans EVE-NG avec détection automatique du produit, du template, de la version et du layout disque.
+
+## Interface bilingue FR / EN
+
+L'interface est disponible en français et en anglais. Au premier chargement, EVE Image Forge utilise le français pour un navigateur francophone et l'anglais pour les autres langues. Les boutons `FR` et `EN` dans l'en-tête permettent de changer instantanément de langue et le choix est mémorisé localement dans le navigateur.
+
+La traduction couvre aussi les éléments dynamiques: progression d'upload, Smart Plan, état de la cible, mapping des disques, avertissements, raisons de détection, résultats, erreurs et principaux messages des logs d'installation.
 
 ## Nouveauté 0.2: Smart Import
 
