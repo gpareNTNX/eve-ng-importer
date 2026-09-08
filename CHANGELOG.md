@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.2 — Cleanup automatique
+
+- Nettoyage automatique après un import réel réussi.
+- Suppression du `.blob`, du `.json` d'upload et du dossier de travail associé.
+- Les fichiers temporaires sont conservés après un dry-run afin de permettre l'installation réelle sans ré-upload.
+- Les fichiers temporaires sont conservés après un échec afin de faciliter une nouvelle tentative et le diagnostic.
+- Cleanup idempotent : les fichiers déjà supprimés manuellement ne provoquent pas d'échec du cleanup.
+- Les erreurs `FileNotFoundError` liées à un upload supprimé sont maintenant masquées derrière le message propre `Upload introuvable` au lieu d'exposer un chemin interne du serveur.
+- L'API `/api/status` expose `cleanup_after_install: true`.
+
 ## 0.2.1 — Interface bilingue
 
 - Interface complète en français et en anglais.
