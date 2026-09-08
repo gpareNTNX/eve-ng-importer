@@ -5,6 +5,7 @@ import json
 import mimetypes
 import os
 import secrets
+import shutil
 import threading
 import time
 import traceback
@@ -35,7 +36,55 @@ def load_token() -> str:
     # Dev fallback only: generated per process.
     return secrets.token_hex(24)
 
+
 TOKEN = load_token()
+
+
+def cleanup_upload(upload_id: str | None) -> dict:
+    """Remove temporary files for one upload. Safe to call more than once."""
+    if not upload_id:
+        return {"cleanup_done": True, "removed": 0, "errors": []}
+
+    uid = CORE.sanitize_name(str(upload_id), "upload")
+    state = Path(STATE_ROOT)
+    removed: list[str] = []
+    errors: list[str] = []
+
+    for path in (
+        state / "uploads" / f"{uid}.blob",
+        state / "uploads" / f"{uid}.json",
+    ):
+        try:
+            path.unlink()
+            removed.append(str(path))
+        except FileNotFoundError:
+            pass
+        except OSError as e:
+            errors.append(f"{path}: {e}")
+
+    work = state / "work" / uid
+    try:
+        if work.exists():
+            shutil.rmtree(work)
+            removed.append(str(work))
+    except OSError as e:
+        errors.append(f"{work}: {e}")
+
+    return {
+        "cleanup_done": not errors,
+        "removed": len(removed),
+        "errors": errors,
+    }
+
+
+def public_error(exc: Exception) -> str:
+    """Hide internal filesystem paths when an upload was removed or expired."""
+    if isinstance(exc, FileNotFoundError):
+        return "Upload introuvable"
+    text = str(exc)
+    if text in {"Upload introuvable", "Upload inconnu"}:
+        return "Upload introuvable"
+    return text
 
 
 def job_worker(job_id: str, spec: dict):
@@ -43,21 +92,35 @@ def job_worker(job_id: str, spec: dict):
         with JOBS_LOCK:
             JOBS[job_id]["logs"].append(msg)
             JOBS[job_id]["updated"] = time.time()
+
     def progress(v: int):
         with JOBS_LOCK:
             JOBS[job_id]["progress"] = int(v)
             JOBS[job_id]["updated"] = time.time()
+
     try:
         result = CORE.install(spec, log, progress)
+
+        # Keep temporary files after a dry-run or failure so the user can retry.
+        # After a real successful import, remove upload metadata/blob and work files.
+        if not result.get("dry_run") and bool(spec.get("cleanup_after_install", True)):
+            cleanup = cleanup_upload(spec.get("upload_id"))
+            result["cleanup"] = cleanup
+            if cleanup["cleanup_done"]:
+                log(f"CLEANUP: OK ({cleanup['removed']} élément(s) temporaire(s) supprimé(s))")
+            else:
+                log("CLEANUP: PARTIAL - " + "; ".join(cleanup["errors"]))
+
         with JOBS_LOCK:
             JOBS[job_id]["status"] = "done"
             JOBS[job_id]["result"] = result
             JOBS[job_id]["progress"] = 100
     except Exception as e:
-        log(f"ERREUR: {e}")
+        message = public_error(e)
+        log(f"ERREUR: {message}")
         with JOBS_LOCK:
             JOBS[job_id]["status"] = "error"
-            JOBS[job_id]["error"] = str(e)
+            JOBS[job_id]["error"] = message
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -121,6 +184,7 @@ class Handler(BaseHTTPRequestHandler):
             if p == "/api/status":
                 status = CORE.system_status()
                 status["version"] = APP_VERSION
+                status["cleanup_after_install"] = True
                 return self._json(200, status)
             if p == "/api/templates":
                 return self._json(200, {"templates": CORE.discover_templates()})
@@ -134,8 +198,10 @@ class Handler(BaseHTTPRequestHandler):
                         return self._json(404, {"error": "Job introuvable"})
                     return self._json(200, job.copy())
             return self._json(404, {"error": "not found"})
+        except FileNotFoundError as e:
+            return self._json(410, {"error": public_error(e)})
         except Exception as e:
-            return self._json(500, {"error": str(e)})
+            return self._json(500, {"error": public_error(e)})
 
     def do_PUT(self):
         p = urlparse(self.path).path
@@ -150,9 +216,12 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, {"received": new_size})
             return self._json(404, {"error": "not found"})
         except ForgeError as e:
-            return self._json(400, {"error": str(e)})
+            code = 410 if public_error(e) == "Upload introuvable" else 400
+            return self._json(code, {"error": public_error(e)})
+        except FileNotFoundError as e:
+            return self._json(410, {"error": public_error(e)})
         except Exception as e:
-            return self._json(500, {"error": str(e)})
+            return self._json(500, {"error": public_error(e)})
 
     def do_POST(self):
         p = urlparse(self.path).path
@@ -175,20 +244,28 @@ class Handler(BaseHTTPRequestHandler):
                 jid = secrets.token_hex(8)
                 with JOBS_LOCK:
                     JOBS[jid] = {
-                        "job_id": jid, "status": "running", "progress": 0,
-                        "logs": [], "result": None, "error": None,
-                        "created": time.time(), "updated": time.time(),
+                        "job_id": jid,
+                        "status": "running",
+                        "progress": 0,
+                        "logs": [],
+                        "result": None,
+                        "error": None,
+                        "created": time.time(),
+                        "updated": time.time(),
                     }
                 threading.Thread(target=job_worker, args=(jid, spec), daemon=True).start()
                 return self._json(202, {"job_id": jid})
             return self._json(404, {"error": "not found"})
         except ForgeError as e:
-            return self._json(400, {"error": str(e)})
+            code = 410 if public_error(e) == "Upload introuvable" else 400
+            return self._json(code, {"error": public_error(e)})
+        except FileNotFoundError as e:
+            return self._json(410, {"error": public_error(e)})
         except (KeyError, ValueError) as e:
             return self._json(400, {"error": f"Paramètre invalide: {e}"})
         except Exception as e:
             traceback.print_exc()
-            return self._json(500, {"error": str(e)})
+            return self._json(500, {"error": public_error(e)})
 
 
 def main():
