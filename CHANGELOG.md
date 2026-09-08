@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.1 — Interface bilingue
+
+- Interface complète en français et en anglais.
+- Détection automatique de la langue du navigateur au premier chargement.
+- Sélecteur `FR` / `EN` dans l'en-tête.
+- Langue choisie mémorisée dans `localStorage`.
+- Traduction dynamique sans rechargement de page.
+- Smart Plan, progression d'upload, états, mapping des disques et résultats traduits.
+- Traduction anglaise des avertissements, raisons de détection, erreurs et principaux logs provenant du moteur Smart Import.
+- Unités de taille adaptées à la langue (`Go` / `GB`, etc.).
+- Tests automatisés de l'interface i18n.
+- La version affichée par l'API est maintenant lue depuis le fichier `VERSION`.
+
 ## 0.2.0 — Smart Import
 
 - Détection automatique constructeur / produit / version.
